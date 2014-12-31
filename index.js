@@ -1,3 +1,9 @@
+var nodes = {
+	uptown: [],
+	downtown: [],
+	all: []
+};
+
 $(function() {
 
 	var canvas = document.getElementById('canvas');
@@ -12,7 +18,7 @@ $(function() {
 	var downtownPlatformY = centerY + trackSpace + yellowStripSpace;
 
 	var NODE_RADIUS = 2; // feet
-	var RANGE_RADIUS = 100; // feet
+	var RANGE_RADIUS = 150; // feet
 	var MAX_CONNECTIONS = 5;
 
 	var Node = function(minY) {
@@ -50,6 +56,41 @@ $(function() {
 		},
 		distance: function(node) {
 			return Math.sqrt(Math.pow(node.x - this.x, 2) + Math.pow(node.y - this.y, 2));
+		},
+		traceroute: function(target, trail){
+			trail.push(this);
+			if( this === target ){
+				return trail;
+			}
+			var route = null;
+			for( var ix = 0; ix < this.connections.length; ix++ ){
+				var conn = this.connections[ix];
+				if( trail.indexOf(conn) !== -1){
+					continue;
+				}
+				route = conn.traceroute(target,trail);
+				if(route){
+					break;
+				}
+			}
+			return route;
+		},
+		hopStatistics: function(nodes){
+			var maxHops = 0;
+			var allHops = 0;
+			nodes.forEach(function(node){
+				var hops = this.traceroute(node, [this]);
+				if( hops ){
+					allHops += hops.length;
+					if( hops.length > maxHops){
+						maxHops = hops.length;
+					}
+				}
+			}, this);
+			return {
+				max: maxHops,
+				mean: allHops / nodes.length
+			};
 		}
 	};
 
@@ -64,11 +105,8 @@ $(function() {
 	function createNode(node) {
 		context.beginPath();
 		context.arc(node.x, node.y, NODE_RADIUS, 0, 2 * Math.PI, false);
-		context.fillStyle = 'green';
+		context.fillStyle = '#333';
 		context.fill();
-		context.lineWidth = 2;
-		context.strokeStyle = '#333';
-		context.stroke();
 	}
 	
 	function createConnections(node){
@@ -108,18 +146,34 @@ $(function() {
 	}
 
 	function renderPhones(nodes, options) {
-		function renderNodes(nodes) {
+		function renderWifi(nodes) {
 			nodes.forEach(function(node) {
 				createRange(node);
 			});
+		}
+		function renderConns(nodes){
 			nodes.forEach(function(node) {
 				createConnections(node);
 			});
+		}
+		function renderNodes(nodes){
 			nodes.forEach(function(node) {
 				createNode(node);
 			});
 		}
 
+		if (options.uptown && nodes.uptown) {
+			renderWifi(nodes.uptown);
+		}
+		if (options.downtown && nodes.downtown) {
+			renderWifi(nodes.downtown);
+		}
+		if (options.uptown && nodes.uptown) {
+			renderConns(nodes.uptown);
+		}
+		if (options.downtown && nodes.downtown) {
+			renderConns(nodes.downtown);
+		}
 		if (options.uptown && nodes.uptown) {
 			renderNodes(nodes.uptown);
 		}
@@ -130,11 +184,6 @@ $(function() {
 
 
 
-	var nodes = {
-		uptown: [],
-		downtown: [],
-		all: []
-	};
 	for (var ix = 0; ix < 20; ix++) {
 		nodes.uptown.push(new Node(uptownPlatformY));
 		nodes.downtown.push(new Node(downtownPlatformY));
@@ -149,5 +198,33 @@ $(function() {
 		uptown: true,
 		downtown: true
 	});
-
+	
+	
+	var maxHops = 0;
+	var allMeanHops = 0;
+	nodes.all.forEach(function(node){
+		var nodeStats = node.hopStatistics(nodes.all);
+		if( nodeStats.max > maxHops ){
+			maxHops = nodeStats.max;
+		}
+		allMeanHops += nodeStats.mean;
+	});
+	var meanHops = Math.round(allMeanHops * 100 / nodes.all.length) / 100;
+	
+	var maxConns = 0;
+	var allMeanConns = 0;
+	nodes.all.forEach(function(node){
+		allMeanConns += node.connections.length;
+		if (node.connections.length > maxConns){
+			maxConns = node.connections.length;
+		}
+	});
+	var meanConns = Math.round(allMeanConns * 100 / nodes.all.length) / 100;
+	
+	$("#max_hops").html(maxHops);
+	$("#mean_hops").html(meanHops);
+	$("#max_conns").html(maxConns);
+	$("#mean_conns").html(meanConns);
+	$("#wifi_range").html(RANGE_RADIUS + " Feet");
+	$("#total_nodes").html(nodes.all.length);
 });

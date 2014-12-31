@@ -1,13 +1,41 @@
 <html>
 <head>
   <title>Meshnet Modeling</title>
-  <link rel="stylesheet" href="index.css"></link>
+  <link rel="stylesheet" href="index.css"/>
 </head>
 <body>
-    <canvas id="canvas" width="960" height="480"> <!-- width="960" height="720" -->
-        
-        
-    </canvas>
+    <div id="container">
+        <canvas id="canvas" width="960" height="360"> <!-- width="960" height="720" -->  
+        </canvas>
+        <div id="statistics">
+            <div>
+                <label>Mean Hops: </label>
+                <span id="mean_hops"></span>
+            </div>
+            <div>
+                <label>Max Hops: </label>
+                <span id="max_hops"></span>
+            </div>
+
+            <div>
+                <label>Mean Connections: </label>
+                <span id="mean_conns"></span>
+            </div>
+            <div>
+                <label>Max Connections: </label>
+                <span id="max_conns"></span>
+            </div>
+            
+            <div>
+                <label>WiFi Radius: </label>
+                <span id="wifi_range"></span>
+            </div>
+            <div>
+                <label>Total Nodes: </label>
+                <span id="total_nodes"></span>
+            </div>
+        </div>
+    </div>
   <script type="text/javascript" src="bower_components/jquery/dist/jquery.min.js"></script>
   <script type="text/javascript" src="index.js"></script>
 </body>
